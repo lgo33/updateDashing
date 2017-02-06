@@ -4,12 +4,12 @@ from bs4 import BeautifulSoup
 import sys
 
 class mvgLive(object):
-    def __init__(self, stop = None, filter = None) -> object:
+    def __init__(self, stop = None, whitelist = None, blacklist = None) -> object:
+        self.setFilter(whitelist=whitelist, blacklist=blacklist)
         if stop:
             response = self.getResponse(stop)
             self.parsed = self.parse(response.read())
-        if filter is not None:
-            self.setFilter(filter)
+
 
 
     def getResponse(self, stop, **kwargs):
@@ -29,8 +29,20 @@ class mvgLive(object):
         else:
             return {'stop': params}
 
-    def setFilter(self, filter):
-        pass
+    def setFilter(self, whitelist, blacklist):
+        self.whitelist = whitelist
+        self.blacklist = blacklist
+
+    def filter(self, stop):
+        if self.whitelist:
+            if stop['line'] not in self.whitelist and \
+                stop['destination'] not in self.whitelist:
+                return None
+        if self.blacklist:
+            if stop['line'] in self.blacklist or \
+                stop['destination'] in self.blacklist:
+                return None
+        return stop
 
     def parse(self, html):
         soup = BeautifulSoup(html, "html.parser")
@@ -48,7 +60,9 @@ class mvgLive(object):
             for row in rows:
                 cols = row.find_all('td')
                 cols = [ele.text.strip() for ele in cols]
-                data['timetable'].append(self.mkStop(cols))
+                add = self.filter(self.mkStop(cols))
+                if add:
+                    data['timetable'].append(add)
         else:
             try:
                 ul = soup.find('ul')
@@ -74,4 +88,5 @@ if __name__ == '__main__':
         mvgLive().usage()
     #print(mvg.buildUrl('Grillparzerstraße'))
 
-    mvgLive('Grillparzerstraße').print()
+    mvgLive('Grillparzerstraße', whitelist=['100']).print()
+    #mvgLive('Grillparzerstraße', blacklist=['54', 'Ostbahnhof']).print()
