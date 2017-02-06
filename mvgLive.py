@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 import sys
 
 class mvgLive(object):
-    def __init__(self, stop = None, whitelist = None, blacklist = None) -> object:
-        self.setFilter(whitelist=whitelist, blacklist=blacklist)
+    def __init__(self, stop = None, whitelist = None, blacklist = None, maxTime = None) -> object:
+        self.setFilter(whitelist=whitelist, blacklist=blacklist, maxTime=maxTime)
         if stop:
             response = self.getResponse(stop)
             self.parsed = self.parse(response.read())
@@ -29,9 +29,10 @@ class mvgLive(object):
         else:
             return {'stop': params}
 
-    def setFilter(self, whitelist, blacklist):
+    def setFilter(self, whitelist, blacklist, maxTime):
         self.whitelist = whitelist
         self.blacklist = blacklist
+        self.maxTime = maxTime
 
     def filter(self, stop):
         if self.whitelist:
@@ -41,6 +42,9 @@ class mvgLive(object):
         if self.blacklist:
             if stop['line'] in self.blacklist or \
                 stop['destination'] in self.blacklist:
+                return None
+        if self.maxTime:
+            if stop['minutes'] > self.maxTime:
                 return None
         return stop
 
