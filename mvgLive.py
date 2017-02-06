@@ -43,9 +43,8 @@ class mvgLive(object):
             if stop['line'] in self.blacklist or \
                 stop['destination'] in self.blacklist:
                 return None
-        if self.maxTime:
-            if stop['minutes'] > self.maxTime:
-                return None
+        if self.maxTime and int(stop['minutes']) > self.maxTime:
+            return None
         return stop
 
     def parse(self, html):
